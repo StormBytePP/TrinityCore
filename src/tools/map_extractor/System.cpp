@@ -261,6 +261,7 @@ uint32 ReadBuild(int locale)
     if (!CascOpenFile(CascStorage, filename.c_str(), CASC_LOCALE_ALL, 0, &dbcFile))
     {
         printf("Locale %s not installed.\n", Locales[locale]);
+        CascCloseFile(dbcFile);
         return 0;
     }
 
@@ -305,6 +306,7 @@ uint32 ReadMapDBC()
     if (!CascOpenFile(CascStorage, "DBFilesClient\\Map.dbc", CASC_LOCALE_NONE, 0, &dbcFile))
     {
         printf("Fatal error: Cannot find Map.dbc in archive! %s\n", HumanReadableCASCError(GetLastError()));
+        CascCloseFile(dbcFile);
         exit(1);
     }
 
@@ -345,6 +347,7 @@ void ReadAreaTableDBC()
     if (!CascOpenFile(CascStorage, "DBFilesClient\\AreaTable.dbc", CASC_LOCALE_NONE, 0, &dbcFile))
     {
         printf("Fatal error: Cannot find AreaTable.dbc in archive! %s\n", HumanReadableCASCError(GetLastError()));
+        CascCloseFile(dbcFile);
         exit(1);
     }
 
@@ -352,6 +355,7 @@ void ReadAreaTableDBC()
     if(!dbc.open())
     {
         printf("Fatal error: Invalid AreaTable.dbc file format!\n");
+        CascCloseFile(dbcFile);
         exit(1);
     }
 
@@ -374,6 +378,7 @@ void ReadLiquidTypeTableDBC()
     if (!CascOpenFile(CascStorage, "DBFilesClient\\LiquidType.dbc", CASC_LOCALE_NONE, 0, &dbcFile))
     {
         printf("Fatal error: Cannot find LiquidType.dbc in archive! %s\n", HumanReadableCASCError(GetLastError()));
+        CascCloseFile(dbcFile);
         exit(1);
     }
 
@@ -1163,21 +1168,21 @@ void ExtractDBFilesClient(int l)
     while (fileName)
     {
         std::string filename = fileName;
-        if (CascOpenFile(CascStorage, (filename = (filename + ".db2")).c_str(), 1 << l, 0, &dbcFile) ||
-            CascOpenFile(CascStorage, (filename = (filename.substr(0, filename.length() - 4) + ".dbc")).c_str(), 1 << l, 0, &dbcFile))
+        bool cascOpenAttempt=CascOpenFile(CascStorage, (filename = (filename + ".db2")).c_str(), 1 << l, 0, &dbcFile);
+        if (!cascOpenAttempt) CascCloseFile(dbcFile);
+        if ( cascOpenAttempt && CascOpenFile(CascStorage, (filename = (filename.substr(0, filename.length() - 4) + ".dbc")).c_str(), 1 << l, 0, &dbcFile))
         {
             filename = outputPath + filename.substr(filename.rfind('\\') + 1);
 
             if (!FileExists(filename.c_str()))
                 if (ExtractFile(dbcFile, filename.c_str()))
                     ++count;
-
-            CascCloseFile(dbcFile);
         }
         else
             printf("Unable to open file %s in the archive for locale %s: %s\n", fileName, Locales[l], HumanReadableCASCError(GetLastError()));
 
         fileName = DBFilesClientList[++index];
+        CascCloseFile(dbcFile);
     }
 
     printf("Extracted %u files\n\n", count);

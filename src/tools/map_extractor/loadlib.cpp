@@ -42,6 +42,7 @@ bool ChunkedFile::loadFile(HANDLE mpq, char* filename, bool log)
     {
         if (log)
             printf("No such file %s\n", filename);
+        CascCloseFile(file);
         return false;
     }
 

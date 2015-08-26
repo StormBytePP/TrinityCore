@@ -29,7 +29,12 @@ DBCFile::DBCFile(HANDLE mpq, const char* filename) :
 bool DBCFile::open()
 {
     if (!CascOpenFile(_mpq, _filename, CASC_LOCALE_NONE, 0, &_file))
+    {
+        CascCloseFile(_file); //Because CascOpenFile may write to handler even when returning false
+        _file=NULL;
         return false;
+    }
+        
 
     char header[4];
     unsigned int na, nb, es, ss;
