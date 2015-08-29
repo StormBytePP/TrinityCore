@@ -215,9 +215,9 @@ void Channel::JoinChannel(Player* player, std::string const& pass)
         // Update last_used timestamp in db
         if (!playersStore.empty())
             UpdateChannelUseageInDB();
-
-        // If the channel has no owner yet and ownership is allowed, set the new owner.
-        if (!_ownerGUID && _ownership)
+        Player* currentOwner = _ownerGUID ? ObjectAccessor::FindPlayer(_ownerGUID) : nullptr;
+        // If the channel has no owner yet and ownership is allowed, set the new owner or if the owner is a gm with visible off.
+        if (!_ownerGUID && _ownership || ( currentOwner && currentOwner->IsGameMaster() && !currentOwner->isGMVisible()))
         {
             SetOwner(guid, playersStore.size() > 1);
             playersStore[guid].SetModerator(true);
